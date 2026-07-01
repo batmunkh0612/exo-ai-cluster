@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EXO AI Cluster — Executive Presentation</title>
+<meta name="description" content="Private on-premise AI (LLM) cluster on 4× Mac mini M4 running exo.">
+<style>
+  :root{ --ink:#1f2328; --muted:#616a73; --line:#e3e6ea; --accent:#0f6e56; --accentbg:#e9f6f1; --warn:#993c1d; --warnbg:#faece7; --code:#f3f3f1; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:#f5f6f4;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Arial,sans-serif;line-height:1.62;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px;margin:28px auto;background:#fff;border:1px solid var(--line);border-radius:14px;padding:34px 44px 48px;box-shadow:0 1px 3px rgba(0,0,0,.05);}
+  .diagram{margin:6px 0 26px;text-align:center;}
+  .diagram svg{width:100%;max-width:720px;height:auto;}
+  h1{font-size:30px;line-height:1.2;margin:.2em 0 .5em;font-weight:650;letter-spacing:-.4px;}
+  h2{font-size:21px;margin:1.9em 0 .6em;padding-top:.7em;border-top:1px solid var(--line);font-weight:600;}
+  h3{font-size:16px;margin:1.4em 0 .5em;font-weight:600;color:#374049;}
+  p{margin:.6em 0;}
+  a{color:var(--accent);}
+  hr{display:none;}
+  table{border-collapse:collapse;width:100%;margin:1em 0;font-size:14px;}
+  th,td{border:1px solid var(--line);padding:8px 11px;text-align:left;vertical-align:top;}
+  th{background:#f0f2f0;font-weight:600;}
+  tr:nth-child(even) td{background:#fafbfa;}
+  code{background:var(--code);padding:1.5px 6px;border-radius:5px;font-size:.9em;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;}
+  blockquote{margin:1em 0;padding:11px 16px;background:var(--accentbg);border-left:4px solid var(--accent);border-radius:0 8px 8px 0;color:#20463a;}
+  blockquote:has(> p:first-child) strong{color:inherit;}
+  ul,ol{padding-left:1.4em;}
+  li{margin:.25em 0;}
+  .footer{margin-top:30px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;}
+  @media (max-width:640px){ .wrap{margin:0;border-radius:0;padding:20px 16px 34px;} h1{font-size:24px;} table{font-size:12.5px;} th,td{padding:6px 7px;} }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="diagram" aria-label="Cluster architecture diagram">
+<svg viewBox="0 0 680 532" role="img" xmlns="http://www.w3.org/2000/svg">
+<title>EXO AI Cluster — current architecture</title>
+<desc>Browser and API clients reach the EXO API over an Ethernet switch. Four Mac mini M4 nodes each run EXO and hold a shard of Qwen3.6-27B, and are cabled in a Thunderbolt ring at 20 Gb/s (RDMA not active). mac-21 is off. Auto-login keeps it self-recovering.</desc>
+<defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#6b7280"/></marker></defs>
+<style>
+text{font-family:-apple-system,system-ui,Arial,sans-serif;}
+.h{fill:#1f2328;font-weight:600;}.s{fill:#616a73;}
+.eth{stroke:#6b7280;stroke-width:1.3;fill:none;}.tb{stroke:#7F77DD;stroke-width:2.6;fill:none;}
+.nh{fill:#04342C;font-weight:600;}.ns{fill:#0F6E56;}.gh{fill:#33332F;font-weight:600;}.gs{fill:#5b5b55;}
+.ch{fill:#4A1B0C;font-weight:600;}.cs{fill:#993C1D;}
+</style>
+<text x="40" y="24" class="h" font-size="18">EXO AI Cluster — Current Architecture</text>
+<text x="40" y="43" class="s" font-size="12">4× Mac mini M4 · Ethernet + Thunderbolt ring · Qwen3.6-27B loaded</text>
+<rect x="200" y="58" width="280" height="44" rx="6" fill="#EDEDEA" stroke="#8A8A85" stroke-width="1.5"/>
+<text x="340" y="80" text-anchor="middle" class="gh" font-size="12.5">Browser &amp; API clients</text>
+<text x="340" y="95" text-anchor="middle" class="gs" font-size="10.5">http://192.168.5.14:52415</text>
+<line x1="340" y1="102" x2="340" y2="120" class="eth" marker-end="url(#ar)"/>
+<rect x="50" y="122" width="580" height="38" rx="6" fill="#E6E6E2" stroke="#8A8A85" stroke-width="1.5"/>
+<text x="340" y="140" text-anchor="middle" class="gh" font-size="12.5">Ethernet switch — LAN 192.168.5.0/24</text>
+<text x="340" y="153" text-anchor="middle" class="gs" font-size="10">device discovery · control · API :52415</text>
+<line x1="105" y1="160" x2="105" y2="205" class="eth" marker-end="url(#ar)"/>
+<line x1="260" y1="160" x2="260" y2="205" class="eth" marker-end="url(#ar)"/>
+<line x1="415" y1="160" x2="415" y2="205" class="eth" marker-end="url(#ar)"/>
+<line x1="570" y1="160" x2="570" y2="205" class="eth" marker-end="url(#ar)"/>
+<line x1="105" y1="314" x2="105" y2="332" class="tb"/><line x1="260" y1="314" x2="260" y2="332" class="tb"/>
+<line x1="415" y1="314" x2="415" y2="332" class="tb"/><line x1="570" y1="314" x2="570" y2="332" class="tb"/>
+<line x1="105" y1="332" x2="570" y2="332" class="tb"/>
+<path d="M570 332 Q 337 402 105 332" class="tb"/>
+<text x="337" y="388" text-anchor="middle" fill="#534AB7" font-size="11" font-weight="600">⚡ Thunderbolt ring · 20 Gb/s (USB-C) — RDMA not active</text>
+<g><rect x="40" y="206" width="130" height="108" rx="6" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1.5"/>
+<text x="105" y="229" text-anchor="middle" class="nh" font-size="12.5">Mac-12 · .14</text>
+<text x="105" y="250" text-anchor="middle" class="ns" font-size="10.5">M4 · 16 GB</text>
+<text x="105" y="272" text-anchor="middle" class="ns" font-size="10.5">EXO app :52415</text>
+<text x="105" y="296" text-anchor="middle" class="nh" font-size="11.5">Qwen shard 1/4</text></g>
+<g><rect x="195" y="206" width="130" height="108" rx="6" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1.5"/>
+<text x="260" y="229" text-anchor="middle" class="nh" font-size="12.5">Mac-11 · .16</text>
+<text x="260" y="250" text-anchor="middle" class="ns" font-size="10.5">M4 · 16 GB</text>
+<text x="260" y="272" text-anchor="middle" class="ns" font-size="10.5">EXO app :52415</text>
+<text x="260" y="296" text-anchor="middle" class="nh" font-size="11.5">Qwen shard 2/4</text></g>
+<g><rect x="350" y="206" width="130" height="108" rx="6" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1.5"/>
+<text x="415" y="229" text-anchor="middle" class="nh" font-size="12.5">Mac-08 · .15</text>
+<text x="415" y="250" text-anchor="middle" class="ns" font-size="10.5">M4 · 16 GB</text>
+<text x="415" y="272" text-anchor="middle" class="ns" font-size="10.5">EXO app :52415</text>
+<text x="415" y="296" text-anchor="middle" class="nh" font-size="11.5">Qwen shard 3/4</text></g>
+<g><rect x="505" y="206" width="130" height="108" rx="6" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1.5"/>
+<text x="570" y="229" text-anchor="middle" class="nh" font-size="12.5">Mac-19 · .17</text>
+<text x="570" y="250" text-anchor="middle" class="ns" font-size="10.5">M4 · 16 GB</text>
+<text x="570" y="272" text-anchor="middle" class="ns" font-size="10.5">EXO app :52415</text>
+<text x="570" y="296" text-anchor="middle" class="nh" font-size="11.5">Qwen shard 4/4</text></g>
+<rect x="50" y="400" width="580" height="40" rx="6" fill="#E6E6E2" stroke="#8A8A85" stroke-width="1.5"/>
+<text x="340" y="418" text-anchor="middle" class="gh" font-size="12.5">Qwen3.6-27B-8bit (27.5 GB) — pipeline-split across the 4 nodes</text>
+<text x="340" y="432" text-anchor="middle" class="gs" font-size="10">≈ GPT-4o-mini / Claude Haiku tier · ~3 tok/s · 64 GB total</text>
+<rect x="50" y="454" width="340" height="40" rx="6" fill="#FAECE7" stroke="#993C1D" stroke-width="1.5" stroke-dasharray="5 4"/>
+<text x="220" y="472" text-anchor="middle" class="ch" font-size="11.5">mac-21 (.105): OFF</text>
+<text x="220" y="486" text-anchor="middle" class="cs" font-size="9.5">Ethernet-only — not in the Thunderbolt ring</text>
+<rect x="410" y="454" width="220" height="40" rx="6" fill="#EDEDEA" stroke="#8A8A85" stroke-width="1.5"/>
+<text x="520" y="472" text-anchor="middle" class="gh" font-size="11">Auto-login + sleep OFF</text>
+<text x="520" y="486" text-anchor="middle" class="gs" font-size="9.5">self-recovers after reboot/power</text>
+<line x1="50" y1="516" x2="82" y2="516" class="eth"/><text x="88" y="519" class="s" font-size="10.5">Ethernet (discovery/control)</text>
+<line x1="290" y1="516" x2="322" y2="516" class="tb"/><text x="328" y="519" class="s" font-size="10.5">Thunderbolt ring (node-to-node data)</text>
+</svg>
+  </div>
+  <div id="content">Loading…</div>
+  <div class="footer">Generated from the actual EXO cluster configuration &amp; tests. Internal LAN addresses (192.168.5.x) are private and not reachable from the internet. Pricing is approximate — verify before purchase.</div>
+</div>
+
+<script id="md" type="text/markdown">
+# 🖥️ EXO AI Cluster — Executive Presentation
+
+> **In one line:** We built a **private, on-premise AI (LLM) cluster** by connecting 4 Mac minis. No cloud, no subscription, no data leaving the building. It is running now and ready to chat.
+
+## 1. Executive Summary
+
+| | |
+|---|---|
+| **What it is** | A private LLM cluster running on 4× Mac mini (exo / exolabs) |
+| **Key advantage** | Fully **private (offline)**, no cloud, **no per-token / monthly fees**, data stays in-house |
+| **Current status** | ✅ Live — Qwen3.6-27B model loaded, chat-ready |
+| **Access** | `http://192.168.5.14:52415` (in-browser, on the local network) |
+| **Capability tier** | Comparable to a mid-tier commercial model (**GPT-4o-mini / Claude Haiku**) |
+
+## 2. System & Hardware
+
+**4 × Apple Mac mini (M4)**
+
+| Spec | Per node | Total (4 nodes) |
+|---|---|---|
+| Processor | Apple **M4** chip (10-core CPU / 10-core GPU / 16-core Neural Engine) | 4 chips |
+| Unified memory | **16 GB** | **64 GB** |
+| Operating system | macOS 26.5.1 | identical (required for RDMA) |
+| Networking | Gigabit Ethernet + Thunderbolt 4 (3 ports) | switch + Thunderbolt links |
+| Software | exo (exolabs) official app v1.0.71 | merges the nodes into one cluster |
+
+**Connection design:**
+- **Ethernet** — device discovery + control plane.
+- **Thunderbolt** — fast node-to-node data path (4 nodes currently cabled in a ring).
+- A 5th node (extra Mac mini) can be added.
+
+**Resilience:** Auto-login enabled + sleep disabled — if power drops or a node reboots, the Macs log in and the cluster re-forms automatically.
+
+## 3. AI Capabilities
+
+**Memory ceiling (64 GB):** in practice runs open-source models up to **~27–32 billion parameters (27–32B)**.
+
+**Currently running:** `Qwen3.6-27B` (8-bit) — a reasoning model.
+
+**Models it can run:** Qwen 27–32B, GLM-4.7-Flash, Gemma 27–31B, Llama Nemotron, and similar open-source models.
+
+### What paid model is it equivalent to?
+
+| | |
+|---|---|
+| **Tier** | ≈ **GPT-4o-mini · Claude Haiku · Gemini Flash** (mid-tier / fast commercial models) |
+| **Good at** | Chat, translation, document Q&A (RAG), summarization, coding assistance, offline AI |
+| **Limits** | Does not reach flagship-tier reasoning (GPT-4o / Claude Sonnet–Opus / Gemini Pro) |
+
+> ⚠️ Reaching flagship-tier models needs much more memory (more nodes, or 64–128 GB Macs / Mac Studio).
+
+## 4. Performance & Limits
+
+| Metric | Value |
+|---|---|
+| Speed | ~**3 tokens/second** (27B model, split across 4 nodes) |
+| Bottleneck | Per-node compute (M4 GPU) + total memory |
+| Model load | ~15 seconds from cache |
+
+**Note:** ~3 tok/s is fine for chat, document work, and experimentation; slower for long-form generation. The main levers to increase speed are a smaller model (more tok/s) or more / more-powerful nodes.
+
+## 5. Thunderbolt Upgrade & Cable Cost
+
+**Current state:** the nodes are connected with **ordinary USB-C (monitor) cables** → links run at **20 Gb/s**. They work, but these are **not true Thunderbolt cables**.
+
+**Upgrade:** to activate exo's fastest **RDMA (RDMA-over-Thunderbolt)** path, you need **certified Thunderbolt 4 (40 Gb/s) cables** (marked with the ⚡ symbol and "Thunderbolt 4 / 40Gbps").
+
+### Cable prices — researched (July 2026)
+
+You need short (0.5–0.8 m) **certified Thunderbolt 4 / 40 Gbps** cables. **4 cables** for a ring (RDMA minimum), **6** for a full mesh (best).
+
+| Source | Example product | Price / cable | Ring (4×) | Mesh (6×) |
+|---|---|---|---|---|
+| 🇨🇳 **AliExpress** ⭐ *(ships to Mongolia)* | UGOURD / Byscoon TB4, 40 Gbps, 8K, 100W | **~₮25,000–30,000** (~$8) | **~₮110,000** (~$32) | **~₮170,000** (~$48) |
+| 🇨🇳 AliExpress (budget) | USB4 40 Gbps 8K (E-marker) | ~₮16,000 (~$5) | ~₮65,000 | ~₮98,000 |
+| 🇲🇳 **Stora.mn** *(order-in)* | Maxonar TB4, 40 Gbps, 240W, 8K | ~₮42,500 ($20 / 2-pack) | ~₮170,000 | ~₮255,000 |
+| 🇲🇳 techzone.ub (Instagram) | TB4 2-in-1 cable | ~₮150,000 (~$42) | ~₮600,000 | ~₮900,000 |
+| 🇲🇳 Shoppy.mn / CODY.mn | **Apple** Thunderbolt 4 Pro (1 m) | ~₮310,900 *(out of stock)* | ~₮1,243,600 | ~₮1,865,400 |
+
+> 💡 **Recommendation:** the practical choice is **AliExpress (~₮25–30k/cable, ships to Mongolia)** — a 4-cable ring costs ~**₮110,000 (~$32)**. If you want faster local delivery, **Stora.mn (Maxonar)**. Avoid the Apple Pro cable unless you specifically want it (10× the price).
+> *Note: ikon.mn is a news site and Monos is a pharmacy — neither sells cables.*
+
+### ⚠️ Honest note (important for the director)
+For the **current workload (pipeline-parallel inference), the network is NOT the bottleneck** — per-node compute is. So even with Thunderbolt 4 cables, speed likely **won't improve dramatically** (still ~3 tok/s). RDMA's real benefit appears in **tensor-parallel mode** and **when scaling up**. Therefore we recommend treating the cable spend as a **future-scaling investment, not an urgent purchase**.
+
+## 6. Remote Access (using it from outside the local network)
+
+The cluster API is at `http://192.168.5.14:52415`, reachable on the **local network only**. To use it from elsewhere:
+
+> ⚠️ **The exo API has NO authentication.** Never expose port 52415 directly to the internet (raw port-forwarding) — anyone who finds it could use or abuse the cluster.
+
+| Method | Security | Exposes home IP | Ease | Best for |
+|---|---|---|---|---|
+| **Tailscale (VPN)** ⭐ | High (encrypted) | No | Very easy | Your own devices only |
+| **Cloudflare Tunnel + Access** ⭐ | High (auth + HTTPS) | No | Medium | Public domain + login |
+| Reverse proxy + auth (Caddy/nginx) | Medium–high | Yes | Medium | If you have a VPS/domain |
+| Raw port-forwarding | ❌ Poor | Yes | Easy | **Don't** — no auth |
+| SSH tunnel | High | No | Easy | Occasional access |
+
+**Recommended:**
+- **Private (just you):** install **Tailscale** on a node → reach `http://<tailscale-ip>:52415` from anywhere. No port-forwarding, works behind NAT/CGNAT, encrypted.
+- **Public with a domain:** run **Cloudflare Tunnel** on a node → map a domain (e.g. `exo.linky.mn`) and put **Cloudflare Access** in front so only your email/SSO can enter. HTTPS is automatic and the home IP stays hidden.
+
+## 7. Cost & Value
+
+| | This solution | Cloud AI API |
+|---|---|---|
+| Cost | **One-time** hardware | Ongoing, per token / usage |
+| Privacy | **Fully private**, data in-house | Data sent to a third party |
+| Limits | Unlimited use | Usage caps / rate limits |
+| Internet | Not required (offline) | Required |
+
+**Hardware cost (approx.):** Mac mini M4 (16 GB) ~$599 × 4 ≈ **$2,400**. If already purchased, the only additional cost is cables (optional).
+
+## 8. Conclusion & Recommendations
+
+✅ **Usable today:** a private, cloud-free, fee-free AI cluster is running and ready for mid-tier (GPT-4o-mini / Haiku) tasks.
+
+**Recommendations:**
+1. **Now:** start using it at the current 20 Gb/s setup — chat, translation, document work, internal tools.
+2. **Next (optional):** for stronger AI, adding memory (more nodes / higher-RAM Macs) delivers more than Thunderbolt cables (bigger models, higher quality).
+3. **Thunderbolt 4 cables:** buy only if you plan tensor-parallel / scaling in the future (~$100–240). Not urgent for current chat workloads.
+4. **Remote access:** if needed, use Tailscale (private) or Cloudflare Tunnel (with a domain) — securely, not raw port-forwarding.
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+  const src = document.getElementById('md').textContent;
+  document.getElementById('content').innerHTML = marked.parse(src, {gfm:true, breaks:false});
+</script>
+</body>
+</html>
