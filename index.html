@@ -36,7 +36,7 @@
   <div class="diagram" aria-label="Cluster architecture diagram">
 <svg viewBox="0 0 680 532" role="img" xmlns="http://www.w3.org/2000/svg">
 <title>EXO AI Cluster — current architecture</title>
-<desc>Browser and API clients reach the EXO API over an Ethernet switch. Four Mac mini M4 nodes each run EXO and hold a shard of Qwen3.6-27B, and are cabled in a Thunderbolt ring at 20 Gb/s (RDMA not active). mac-21 is off. Auto-login keeps it self-recovering.</desc>
+<desc>Browser and API clients reach the EXO API over an Ethernet switch. Four Mac mini M4 nodes each run EXO and hold a shard of the model, and are cabled in a Thunderbolt full mesh (6 cables, 20 Gb/s each; RDMA not active). mac-21 is off. Auto-login keeps it self-recovering.</desc>
 <defs><marker id="ar" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#6b7280"/></marker></defs>
 <style>
 text{font-family:-apple-system,system-ui,Arial,sans-serif;}
@@ -46,7 +46,7 @@ text{font-family:-apple-system,system-ui,Arial,sans-serif;}
 .ch{fill:#4A1B0C;font-weight:600;}.cs{fill:#993C1D;}
 </style>
 <text x="40" y="24" class="h" font-size="18">EXO AI Cluster — Current Architecture</text>
-<text x="40" y="43" class="s" font-size="12">4× Mac mini M4 · Ethernet + Thunderbolt ring · Qwen3.6-27B loaded</text>
+<text x="40" y="43" class="s" font-size="12">4× Mac mini M4 · Ethernet + Thunderbolt full mesh · Qwen3.6-35B-A3B loaded</text>
 <rect x="200" y="58" width="280" height="44" rx="6" fill="#EDEDEA" stroke="#8A8A85" stroke-width="1.5"/>
 <text x="340" y="80" text-anchor="middle" class="gh" font-size="12.5">Browser &amp; API clients</text>
 <text x="340" y="95" text-anchor="middle" class="gs" font-size="10.5">http://192.168.5.14:52415</text>
@@ -61,8 +61,10 @@ text{font-family:-apple-system,system-ui,Arial,sans-serif;}
 <line x1="105" y1="314" x2="105" y2="332" class="tb"/><line x1="260" y1="314" x2="260" y2="332" class="tb"/>
 <line x1="415" y1="314" x2="415" y2="332" class="tb"/><line x1="570" y1="314" x2="570" y2="332" class="tb"/>
 <line x1="105" y1="332" x2="570" y2="332" class="tb"/>
-<path d="M570 332 Q 337 402 105 332" class="tb"/>
-<text x="337" y="388" text-anchor="middle" fill="#534AB7" font-size="11" font-weight="600">⚡ Thunderbolt ring · 20 Gb/s (USB-C) — RDMA not active</text>
+<path d="M105 332 Q 260 368 415 332" class="tb" opacity="0.75"/>
+<path d="M260 332 Q 415 368 570 332" class="tb" opacity="0.75"/>
+<path d="M570 332 Q 337 404 105 332" class="tb"/>
+<text x="337" y="392" text-anchor="middle" fill="#534AB7" font-size="11" font-weight="600">⚡ Thunderbolt FULL MESH — every node ↔ every node (6 cables) · 20 Gb/s</text>
 <g><rect x="40" y="206" width="130" height="108" rx="6" fill="#E1F5EE" stroke="#0F6E56" stroke-width="1.5"/>
 <text x="105" y="229" text-anchor="middle" class="nh" font-size="12.5">Mac-12 · .14</text>
 <text x="105" y="250" text-anchor="middle" class="ns" font-size="10.5">M4 · 16 GB</text>
@@ -93,7 +95,7 @@ text{font-family:-apple-system,system-ui,Arial,sans-serif;}
 <text x="520" y="472" text-anchor="middle" class="gh" font-size="11">Auto-login + sleep OFF</text>
 <text x="520" y="486" text-anchor="middle" class="gs" font-size="9.5">self-recovers after reboot/power</text>
 <line x1="50" y1="516" x2="82" y2="516" class="eth"/><text x="88" y="519" class="s" font-size="10.5">Ethernet (discovery/control)</text>
-<line x1="290" y1="516" x2="322" y2="516" class="tb"/><text x="328" y="519" class="s" font-size="10.5">Thunderbolt ring (node-to-node data)</text>
+<line x1="290" y1="516" x2="322" y2="516" class="tb"/><text x="328" y="519" class="s" font-size="10.5">Thunderbolt full mesh (node-to-node data)</text>
 </svg>
   </div>
   <div id="content">Loading…</div>
@@ -129,7 +131,8 @@ text{font-family:-apple-system,system-ui,Arial,sans-serif;}
 
 **Connection design:**
 - **Ethernet** — device discovery + control plane.
-- **Thunderbolt** — fast node-to-node data path (4 nodes currently cabled in a ring).
+- **Thunderbolt** — fast node-to-node data path: **full mesh** (every node cabled to every other node, 6 cables, each link 20 Gb/s, 3 connections per node).
+- Mesh benefit: **redundancy** — any single cable can fail and the cluster stays fully connected (a ring would split), plus it's ready for tensor-parallel/RDMA when true TB4/TB5 cables are installed.
 - A 5th node (extra Mac mini) can be added.
 
 **Resilience:** Auto-login enabled + sleep disabled — if power drops or a node reboots, the Macs log in and the cluster re-forms automatically.
@@ -166,7 +169,7 @@ text{font-family:-apple-system,system-ui,Arial,sans-serif;}
 
 ## 5. Thunderbolt Upgrade & Cable Cost
 
-**Current state:** the nodes are connected with **ordinary USB-C (monitor) cables** → links run at **20 Gb/s**. They work, but these are **not true Thunderbolt cables**.
+**Current state:** the nodes are already cabled in a **full mesh (6 cables)**, but with **ordinary USB-C (monitor) cables** → links run at **20 Gb/s**. They work, but these are **not true Thunderbolt cables**.
 
 **Upgrade:** to activate exo's fastest **RDMA (RDMA-over-Thunderbolt)** path, you need **certified Thunderbolt 4 (40 Gb/s) cables** (marked with the ⚡ symbol and "Thunderbolt 4 / 40Gbps").
 
