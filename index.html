@@ -84,8 +84,8 @@ text{font-family:-apple-system,system-ui,Arial,sans-serif;}
 <text x="570" y="272" text-anchor="middle" class="ns" font-size="10.5">EXO app :52415</text>
 <text x="570" y="296" text-anchor="middle" class="nh" font-size="11.5">Qwen shard 4/4</text></g>
 <rect x="50" y="400" width="580" height="40" rx="6" fill="#E6E6E2" stroke="#8A8A85" stroke-width="1.5"/>
-<text x="340" y="418" text-anchor="middle" class="gh" font-size="12.5">Qwen3.6-27B-8bit (27.5 GB) — pipeline-split across the 4 nodes</text>
-<text x="340" y="432" text-anchor="middle" class="gs" font-size="10">≈ GPT-4o-mini / Claude Haiku tier · ~3 tok/s · 64 GB total</text>
+<text x="340" y="418" text-anchor="middle" class="gh" font-size="12.5">Qwen3.6-35B-A3B (MoE, 4-bit, 20 GB) — pipeline-split across the 4 nodes</text>
+<text x="340" y="432" text-anchor="middle" class="gs" font-size="10">≈ GPT-4o-mini / Claude Haiku tier · ~39 tok/s · 64 GB total</text>
 <rect x="50" y="454" width="340" height="40" rx="6" fill="#FAECE7" stroke="#993C1D" stroke-width="1.5" stroke-dasharray="5 4"/>
 <text x="220" y="472" text-anchor="middle" class="ch" font-size="11.5">mac-21 (.105): OFF</text>
 <text x="220" y="486" text-anchor="middle" class="cs" font-size="9.5">Ethernet-only — not in the Thunderbolt ring</text>
@@ -111,7 +111,7 @@ text{font-family:-apple-system,system-ui,Arial,sans-serif;}
 |---|---|
 | **What it is** | A private LLM cluster running on 4× Mac mini (exo / exolabs) |
 | **Key advantage** | Fully **private (offline)**, no cloud, **no per-token / monthly fees**, data stays in-house |
-| **Current status** | ✅ Live — Qwen3.6-27B model loaded, chat-ready |
+| **Current status** | ✅ Live — Qwen3.6-35B-A3B (MoE) loaded, **~39 tok/s**, chat-ready |
 | **Access** | `http://192.168.5.14:52415` (in-browser, on the local network) |
 | **Capability tier** | Comparable to a mid-tier commercial model (**GPT-4o-mini / Claude Haiku**) |
 
@@ -138,7 +138,7 @@ text{font-family:-apple-system,system-ui,Arial,sans-serif;}
 
 **Memory ceiling (64 GB):** in practice runs open-source models up to **~27–32 billion parameters (27–32B)**.
 
-**Currently running:** `Qwen3.6-27B` (8-bit) — a reasoning model.
+**Currently running:** `Qwen3.6-35B-A3B` (MoE, 4-bit) — a 35B-class reasoning model with only 3B *active* parameters per token, which is why it runs **11× faster** than a dense 27B on this cluster (38.8 vs 3.4 tok/s).
 
 **Models it can run:** Qwen 27–32B, GLM-4.7-Flash, Gemma 27–31B, Llama Nemotron, and similar open-source models.
 
@@ -154,13 +154,15 @@ text{font-family:-apple-system,system-ui,Arial,sans-serif;}
 
 ## 4. Performance & Limits
 
-| Metric | Value |
+| Metric | Value (benchmarked) |
 |---|---|
-| Speed | ~**3 tokens/second** (27B model, split across 4 nodes) |
+| **Speed — MoE Qwen3.6-35B-A3B (current)** | **~38.8 tok/s** generation, ~66 tok/s prefill |
+| Speed — dense Qwen3.6-27B (before) | ~3.4 tok/s (switching to MoE gave **×11.4**) |
+| Cluster power during inference | only **37–48 W** total (4 Macs) |
 | Bottleneck | Per-node compute (M4 GPU) + total memory |
 | Model load | ~15 seconds from cache |
 
-**Note:** ~3 tok/s is fine for chat, document work, and experimentation; slower for long-form generation. The main levers to increase speed are a smaller model (more tok/s) or more / more-powerful nodes.
+**Key insight:** on this cluster the biggest speed lever is **model choice** — MoE models (few *active* parameters, e.g. "A3B") run ~11× faster than dense models of the same class. Network upgrades barely matter for this workload.
 
 ## 5. Thunderbolt Upgrade & Cable Cost
 
@@ -184,7 +186,7 @@ You need short (0.5–0.8 m) **certified Thunderbolt 4 / 40 Gbps** cables. **4 c
 > *Note: ikon.mn is a news site and Monos is a pharmacy — neither sells cables.*
 
 ### ⚠️ Honest note (important for the director)
-For the **current workload (pipeline-parallel inference), the network is NOT the bottleneck** — per-node compute is. So even with Thunderbolt 4 cables, speed likely **won't improve dramatically** (still ~3 tok/s). RDMA's real benefit appears in **tensor-parallel mode** and **when scaling up**. Therefore we recommend treating the cable spend as a **future-scaling investment, not an urgent purchase**.
+For the **current workload (pipeline-parallel inference), the network is NOT the bottleneck** — per-node compute is. This was proven in practice: the big speedup (3.4 → 38.8 tok/s) came from **switching to an MoE model**, not from cabling. RDMA's real benefit appears in **tensor-parallel mode** and **when scaling up**. Therefore treat the cable spend as a **future-scaling investment, not an urgent purchase**. (Note: Thunderbolt 5 cables are now often *cheaper* than TB4 and fully backward-compatible — buy TB5.)
 
 ## 6. Remote Access (using it from outside the local network)
 
@@ -215,7 +217,30 @@ The cluster API is at `http://192.168.5.14:52415`, reachable on the **local netw
 
 **Hardware cost (approx.):** Mac mini M4 (16 GB) ~$599 × 4 ≈ **$2,400**. If already purchased, the only additional cost is cables (optional).
 
-## 8. Conclusion & Recommendations
+## 8. Purchase Links — Racks & Cables (researched July 2026)
+
+### 🗄️ Rack mounts for Mac mini M4
+
+| Product | Price | Link |
+|---|---|---|
+| ⭐ **MK1 — 6× M4 minis, 3U sliding** (fits all nodes + growth) | $419.95 (+$139.95 front power buttons) | [mk1manufacturing.com →](https://www.mk1manufacturing.com/Mac-Mini-Rack-Mounts/Rack-Mount-for-6-M4-mac-minis-with-slide-p100.html) |
+| Sonnet RackMac mini (2024+) — 3× M4, 2U | $349.99 | [sonnettech.com →](https://www.sonnettech.com/product/rackmac-mini-2024/overview.html) · [Store →](https://store.sonnettech.com) |
+| MyElectronics — 3× M4, 1.25U (most compact) | €169 | [myelectronics.nl →](https://www.myelectronics.nl/us/19-inch-125u-rack-mount-for-3x-mac-mini-2024.html) · [eBay →](https://www.ebay.com/str/myelectronicsbv) |
+| Etsy — budget 3D-printed options | from ~$62 | [Etsy search →](https://www.etsy.com/search?q=mac+mini+m4+rackmount) |
+
+### ⚡ Thunderbolt 5 cables (best picks — TB5 is now cheaper than TB4 and backward-compatible)
+
+| Product | Price | Link |
+|---|---|---|
+| ⭐ **UGOURD TB5 certified chip** (ships to Mongolia 🇲🇳, 3,000+ sold, 4.8★) | ₮34,665 (~$10) | [AliExpress →](https://www.aliexpress.com/item/1005009043250961.html) |
+| ⭐ OWC Thunderbolt 5 (0.8 m), 80 Gbps / 240 W | ~$23 | [macsales.com →](https://eshop.macsales.com/item/OWC/TB3F1U0D080/) |
+| OWC TB5 — all lengths | from $20 | [eshop.macsales.com →](https://eshop.macsales.com/shop/cables/thunderbolt) |
+| Cable Matters TB5 (Intel certified) | from $22.99 | [Amazon →](https://www.amazon.com/s?k=cable+matters+thunderbolt+5+cable+certified) |
+| AliExpress TB5 — all options (MNT prices) | ₮19–75k | [AliExpress search →](https://www.aliexpress.com/w/wholesale-thunderbolt-5-cable-certified.html) |
+
+> 💡 **Suggested bundle (4–5 nodes):** MK1 rack ($420, via cargo forwarder) + 6× UGOURD TB5 (~₮208,000, ships direct) ≈ **~$480 total**. US shops (MK1/Sonnet/OWC) don't ship to Mongolia directly — use a cargo forwarder; AliExpress delivers directly. Always pick cables marked "Intel certified / E-marker".
+
+## 9. Conclusion & Recommendations
 
 ✅ **Usable today:** a private, cloud-free, fee-free AI cluster is running and ready for mid-tier (GPT-4o-mini / Haiku) tasks.
 
